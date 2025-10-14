@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - '5000:5000'
+
+  frontend:
+    build: ./frontend/vite-project
+    container_name: frontend
+    ports:
+      - '5005:80'
+    depends_on:
+      - backend
