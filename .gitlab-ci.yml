@@ -1,0 +1,48 @@
+stages:
+  - validate
+  - build_and_scan
+
+# This job ensures your code is clean and your tests pass before any Docker builds happen.
+# It runs in a standard Node.js image, which is fast and efficient.
+validate_code:
+  stage: validate
+  image: node:24-alpine3.22
+  script:
+    - echo "--- Installing dependencies and validating backend ---"
+    - cd backend
+    - npm ci
+    
+    - echo "--- Installing dependencies and validating frontend ---"
+    - cd ../frontend
+    - npm ci
+
+# This job is responsible for building and scanning your Docker images.
+# It uses a single job to ensure the built images are available for scanning.
+build_and_scan_images:
+  stage: build_and_scan
+  # This job needs a Docker environment to build images.
+  image: docker:28.5.1
+  services:
+    - docker:28.5.1-dind # Docker-in-Docker service allows building images inside the CI job.
+  
+  before_script:
+    # We need to install Trivy before we can use it.
+    - apk add --no-cache curl
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  
+  script:
+    - echo "--- Building backend image ---"
+    # Tag the image with a unique commit SHA for traceability.
+    - docker build -t myapp-backend:$CI_COMMIT_SHORT_SHA ./backend
+
+    - echo "--- Scanning backend image for vulnerabilities ---"
+    # Scan the image. If Trivy finds HIGH or CRITICAL vulnerabilities, it will exit with an error code,
+    # and the pipeline will fail. This is a crucial security gate.
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL myapp-backend:$CI_COMMIT_SHORT_SHA
+
+    - echo "--- Building frontend image ---"
+    - docker build -t myapp-frontend:$CI_COMMIT_SHORT_SHA ./frontend
+
+    - echo "--- Scanning frontend image for vulnerabilities ---"
+    - trivy image --exit-code 1 --severity HIGH,CRITICAL myapp-frontend:$CI_COMMIT_SHORT_SHA
+    
