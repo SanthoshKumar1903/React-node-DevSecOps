@@ -13,7 +13,7 @@ validate_code:
     - npm ci
     
     - echo "--- Installing dependencies and validating frontend ---"
-    - cd ../frontend
+    - cd frontend
     - npm ci
 
 # This job is responsible for building and scanning your Docker images.
