@@ -41,7 +41,7 @@ build_and_scan_images:
     - trivy image --exit-code 1 --severity HIGH,CRITICAL myapp-backend:$CI_COMMIT_SHORT_SHA
 
     - echo "--- Building frontend image ---"
-    - docker build -t myapp-frontend:$CI_COMMIT_SHORT_SHA ./frontend
+    - docker build -t myapp-frontend:$CI_COMMIT_SHORT_SHA ./frontend/vite-project
 
     - echo "--- Scanning frontend image for vulnerabilities ---"
     - trivy image --exit-code 1 --severity HIGH,CRITICAL myapp-frontend:$CI_COMMIT_SHORT_SHA
